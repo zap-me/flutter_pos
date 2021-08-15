@@ -18,8 +18,14 @@ int nonce() {
   return ((DateTime.now().millisecondsSinceEpoch) / 1000).floor();
 }
 
-String sign() {
-  hmacSha256 = Hmac(sha256, data);
+String sign(data) async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  var secretBytes = utf8.encode(prefs.getString('secret'));
+  var nonceBytes = utf8.encode(data);
+  Hmac hmacSha256 = Hmac(sha256, secretBytes);
+  Digest bytesDigest = hmacSha256.convert(nonceBytes);
+  String base65Hmac = base64.encode(bytesDigest.bytes);
+  return base64Hmac;
 }
 
 Future<void> setLocalStorage() async {
@@ -35,7 +41,7 @@ Future<void> setLocalStorage() async {
 Future<void> postPayDb(String endpoint, Map<String, String> params) async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
   params['api_key'] = await prefs.getString('api_key') ?? "";
-  params['nonce'] = nonce();
+  params['nonce'] = nonce().toString();
 }
 
 class MyApp extends StatelessWidget {
