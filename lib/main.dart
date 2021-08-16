@@ -31,8 +31,8 @@ String sign(data) async {
 Future<void> setLocalStorage() async {
   // Test localstorage
   SharedPreferences prefs = await SharedPreferences.getInstance();
-  await prefs.setString('api_key', 'bgPfjilKLfk');
-  await prefs.setString('secret', 'Zw_EayWw_CZ0M-L3ril9uA');
+  await prefs.setString('api_key', 'XX');
+  await prefs.setString('secret', 'XX');
   await prefs.setString('asset-ticker','FRT');
   int nonceRes = nonce();
   await prefs.setInt('nonce', nonceRes);
