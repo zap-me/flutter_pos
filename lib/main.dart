@@ -34,8 +34,8 @@ Future<void> setLocalStorage() async {
   await prefs.setString('api_key', 'XX');
   await prefs.setString('secret', 'XX');
   await prefs.setString('asset-ticker','FRT');
-  int nonceRes = nonce();
-  await prefs.setInt('nonce', nonceRes);
+  String nonceRes = nonce().toString();
+  await prefs.setString('nonce', nonceRes);
   postPayDb("paydb/user_info", {"email" : ""});
 }
 
@@ -179,24 +179,30 @@ class _MyHomePageState extends State<MyHomePage> {
 		SizedBox(width: 100),
                 GestureDetector(
                   onTap: () {
+                    TextEditingController apiValue = TextEditingController();
+                    TextEditingController secretValue = TextEditingController();
+                    TextEditingController tickerValue = TextEditingController();
                     Alert(
                       context: context,
                       title: "Settings",
                       content: Column(
 			children: <Widget>[
 			  TextField(
+                            controller: apiValue,
 			    decoration: InputDecoration(
 			      icon: Icon(Icons.vpn_key),
 			      labelText: "apikey"
 			    )
 			  ),
 			  TextField(
+                            controller: secretValue,
 			    decoration: InputDecoration(
 			      icon: Icon(Icons.lock),
 			      labelText: "secret"
 			    )
 			  ),
 			  TextField(
+                            controller: tickerValue,
 			    decoration: InputDecoration(
 			      icon: Icon(Icons.create_rounded),
 			      labelText: "asset name"
@@ -204,6 +210,18 @@ class _MyHomePageState extends State<MyHomePage> {
 			  ),
 			],
                       ),
+                      buttons: [
+                        DialogButton(
+                          onPressed: () async {
+                            SharedPreferences prefs = await SharedPreferences.getInstance();
+                            await prefs.setString('api_key', apiValue.text);
+                            await prefs.setString('secret', secretValue.text);
+                            await prefs.setString('asset-ticker', tickerValue.text);
+                            Navigator.of(context, rootNavigator: true).pop();
+                          },
+                          child: Text("OK")
+                        ),
+                      ],
                     ).show();
                   },
                   child: 
