@@ -205,10 +205,11 @@ class _MyHomePageState extends State<MyHomePage> {
 		),
 		SizedBox(width: 100),
                 GestureDetector(
-                  onTap: () {
-                    TextEditingController apiValue = TextEditingController();
-                    TextEditingController secretValue = TextEditingController();
-                    TextEditingController tickerValue = TextEditingController();
+                  onTap: () async {
+                    SharedPreferences prefs = await SharedPreferences.getInstance();
+                    TextEditingController apiValue = TextEditingController(text: await prefs.getString('api_key'));
+                    TextEditingController secretValue = TextEditingController(text: await prefs.getString('secret'));
+                    TextEditingController tickerValue = TextEditingController(text: await prefs.getString('asset-ticker'));
                     Alert(
                       context: context,
                       title: "Settings",
@@ -240,7 +241,6 @@ class _MyHomePageState extends State<MyHomePage> {
                       buttons: [
                         DialogButton(
                           onPressed: () async {
-                            SharedPreferences prefs = await SharedPreferences.getInstance();
                             await prefs.setString('api_key', apiValue.text);
                             await prefs.setString('secret', secretValue.text);
                             await prefs.setString('asset-ticker', tickerValue.text);
