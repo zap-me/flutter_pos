@@ -5,6 +5,7 @@ import 'package:rflutter_alert/rflutter_alert.dart';
 import 'dart:developer';
 import 'package:crypto/crypto.dart';
 import 'dart:convert';
+import 'package:qr_flutter/qr_flutter.dart';
 
 const URL_BASE = "https://mtoken-test.zap.me/";
 const WS_URL = "https://mtoken-test.zap.me/paydb";
@@ -15,7 +16,19 @@ void main() {
 }
 
 int nonce() {
-  return ((DateTime.now().millisecondsSinceEpoch) / 1000).floor();
+  return DateTime.now().toUtc().millisecondsSinceEpoch;
+}
+
+
+Future<void> setLocalStorage() async {
+  // Test localstorage
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  await prefs.setString('api_key', 'bgPfjilKLfk');
+  await prefs.setString('secret', 'Zw_EayWw_CZ0M-L3ril9uA');
+  await prefs.setString('asset-ticker','FRT');
+  String nonceRes = nonce().toString();
+  await prefs.setString('nonce', nonceRes);
+  postPayDb("paydb/user_info", {"email" : "mtokentest@protonmail.com"});
 }
 
 Future<String> sign(data) async {
@@ -24,31 +37,19 @@ Future<String> sign(data) async {
   var messageBytes = utf8.encode(data);
   Hmac hmacSha256 = Hmac(sha256, secretBytes);
   Digest bytesDigest = hmacSha256.convert(messageBytes);
-  String base64Hmac = base64.encode(bytesDigest.bytes);
-  return base64Hmac;
-}
-
-Future<void> setLocalStorage() async {
-  // Test localstorage
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  await prefs.setString('api_key', 'XX');
-  await prefs.setString('secret', 'XX');
-  await prefs.setString('asset-ticker','FRT');
-  String nonceRes = nonce().toString();
-  await prefs.setString('nonce', nonceRes);
-  postPayDb("paydb/user_info", {"email" : ""});
+  return base64.encode(bytesDigest.bytes);
 }
 
 Future<dynamic> postPayDb(String endpoint, Map<String, String> params) async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  params['api_key'] = await prefs.getString('api_key') ?? "";
+  params['nonce'] = nonce().toString();
   var mapInJsonString = json.encode(params);
   var sig = await sign(mapInJsonString);
   Map<String, String> customHeaders = {
     "Content-Type" : "application/json",
     "X-Signature" : sig
   };
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  params['api_key'] = await prefs.getString('api_key') ?? "";
-  params['nonce'] = nonce().toString();
   Uri url = Uri.parse(URL_BASE + endpoint);
   var response = await http.post(url, headers: customHeaders, body: json.encode(params));
   return response;
@@ -133,18 +134,22 @@ class _MyHomePageState extends State<MyHomePage> {
 		SizedBox(width: 100),
                 GestureDetector(
                   onTap: () {
+                    TextEditingController amountValue = TextEditingController();
+                    TextEditingController msgValue = TextEditingController();
                     Alert(
                       context: context,
                       title: "Send",
                       content: Column(
 			children: <Widget>[
 			  TextField(
+                            controller: amountValue,
 			    decoration: InputDecoration(
 			      icon: Icon(Icons.monetization_on),
 			      labelText: "amount"
 			    )
 			  ),
 			  TextField(
+                            controller: msgValue,
 			    decoration: InputDecoration(
 			      icon: Icon(Icons.message),
 			      labelText: "message"
@@ -152,6 +157,28 @@ class _MyHomePageState extends State<MyHomePage> {
 			  ),
 			],
                       ),
+                      buttons: [
+                        DialogButton(
+                          onPressed: () async {
+                            Navigator.of(context, rootNavigator: true).pop();
+                            Alert(
+                              context: context,
+                              title: "Pressed",
+                              content: Column(
+                                children: <Widget>[
+                                  QrImage(
+				    data: 'premiofrankie://mtokentest@protonmail.com?amount=${int.parse(amountValue.text)*100}&attachment={"invoiceid":"${msgValue.text}}',
+				    version: QrVersions.auto,
+				    size: 180,
+				    gapless: false,
+				  )
+                                ],
+                              ),
+                            ).show();
+                          },
+                          child: Text("OK")
+                        ),
+                      ],
                     ).show();
                   },
                   child: 
