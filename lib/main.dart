@@ -6,12 +6,18 @@ import 'dart:developer';
 import 'package:crypto/crypto.dart';
 import 'dart:convert';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'dart:typed_data';
+import 'dart:html';
 
 const URL_BASE = "https://mtoken-test.zap.me/";
-const WS_URL = "https://mtoken-test.zap.me/paydb";
+const WS_URL = "wss://mtoken-test.zap.me/paydb";
+String base64EncodedPic = "";
+String posEmail = "";
 
-void main() {
-  setLocalStorage();
+void main() async {
+  initApiKeys();
+  await callUserInfo();
+  setUpWS(); 
   runApp(MyApp());
 }
 
@@ -19,16 +25,32 @@ int nonce() {
   return DateTime.now().toUtc().millisecondsSinceEpoch;
 }
 
+Future<void> setUpWS() async {
+  var webSocket = new WebSocket(WS_URL);
+  webSocket.onMessage.listen((MessageEvent e) {
+    print(e.data);
+  });
+}
 
-Future<void> setLocalStorage() async {
-  // Test localstorage
+Future<void> initApiKeys() async {
+  // Provides default values for initial api Keys
   SharedPreferences prefs = await SharedPreferences.getInstance();
   await prefs.setString('api_key', 'bgPfjilKLfk');
   await prefs.setString('secret', 'Zw_EayWw_CZ0M-L3ril9uA');
   await prefs.setString('asset-ticker','FRT');
+}
+
+Future<void> callUserInfo() async {
+  // Test localstorage
+  SharedPreferences prefs = await SharedPreferences.getInstance();
   String nonceRes = nonce().toString();
   await prefs.setString('nonce', nonceRes);
-  postPayDb("paydb/user_info", {"email" : "mtokentest@protonmail.com"});
+  dynamic response = await postPayDb("paydb/user_info", {"email" : null});
+  response = jsonDecode(response.body);
+  print("response is ${response.map}");
+  base64EncodedPic = response["photo"];
+  posEmail = response["email"];
+  //return {"base64EncodedPic" : response.body.image};
 }
 
 Future<String> sign(data) async {
@@ -40,7 +62,7 @@ Future<String> sign(data) async {
   return base64.encode(bytesDigest.bytes);
 }
 
-Future<dynamic> postPayDb(String endpoint, Map<String, String> params) async {
+Future<dynamic> postPayDb(String endpoint, Map<String, String?> params) async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
   params['api_key'] = await prefs.getString('api_key') ?? "";
   params['nonce'] = nonce().toString();
@@ -88,6 +110,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    Uint8List bytes = Base64Codec().decode(base64EncodedPic);
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
@@ -96,6 +119,21 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
+            Container(
+              width: 360.0,
+              height: 90.0,
+              color: Colors.grey,
+              child: 
+                Row(
+                  children: <Widget>[
+		    Card(
+		      child: Image.memory(bytes, fit: BoxFit.cover),
+		    ),
+                    Text(posEmail),
+                  ],
+                ),
+            ),
+            SizedBox(height: 80),
 	    Row(
               mainAxisAlignment: MainAxisAlignment.center,
 	      children: <Widget>[
@@ -126,8 +164,8 @@ class _MyHomePageState extends State<MyHomePage> {
 		    Container(
 		      child: Text("↙️", textAlign: TextAlign.center, style: TextStyle(fontSize: 50)),
 		      alignment: Alignment.center,
-		      width: 180.0,
-		      height: 180.0,
+		      width: 90.0,
+		      height: 90.0,
 		      color: Colors.blue,
 		    ),
                 ),
@@ -185,8 +223,8 @@ class _MyHomePageState extends State<MyHomePage> {
 		    Container(
                       child: Text("↗️", textAlign: TextAlign.center, style: TextStyle(fontSize: 50)),
 		      alignment: Alignment.center,
-		      width: 180.0,
-		      height: 180.0,
+		      width: 90.0,
+		      height: 90.0,
 		      color: Colors.blue,
 		    ),
                 ),
@@ -197,10 +235,10 @@ class _MyHomePageState extends State<MyHomePage> {
               mainAxisAlignment: MainAxisAlignment.center,
 	      children: <Widget>[
 		Container(
-                  child: Text("🎁", textAlign: TextAlign.center, style: TextStyle(fontSize: 50)),
+                  child: Icon(Icons.card_giftcard, size: 40, color: Colors.white),
                   alignment: Alignment.center,
-		  width: 180.0,
-		  height: 180.0,
+		  width: 90.0,
+		  height: 90.0,
                   color: Colors.blue,
 		),
 		SizedBox(width: 100),
@@ -236,6 +274,7 @@ class _MyHomePageState extends State<MyHomePage> {
 			      labelText: "asset name"
 			    )
 			  ),
+                          Text('Server: ${URL_BASE}'),
 			],
                       ),
                       buttons: [
@@ -244,6 +283,7 @@ class _MyHomePageState extends State<MyHomePage> {
                             await prefs.setString('api_key', apiValue.text);
                             await prefs.setString('secret', secretValue.text);
                             await prefs.setString('asset-ticker', tickerValue.text);
+                            callUserInfo();
                             Navigator.of(context, rootNavigator: true).pop();
                           },
                           child: Text("OK")
@@ -253,10 +293,10 @@ class _MyHomePageState extends State<MyHomePage> {
                   },
                   child: 
 		    Container(
-                      child: Text("⚙️", textAlign: TextAlign.center, style: TextStyle(fontSize: 50)),
+                      child: Icon(Icons.settings, size: 40, color: Colors.white),
 		      alignment: Alignment.center,
-		      width: 180.0,
-		      height: 180.0,
+		      width: 90.0,
+		      height: 90.0,
 		      color: Colors.blue,
 		    ),
                 ),
