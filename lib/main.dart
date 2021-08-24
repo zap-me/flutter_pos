@@ -62,7 +62,7 @@ Future<String> sign(data) async {
   return base64.encode(bytesDigest.bytes);
 }
 
-Future<dynamic> postPayDb(String endpoint, Map<String, String?> params) async {
+Future<dynamic> postPayDb(String endpoint, Map<String, dynamic?> params) async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
   params['api_key'] = await prefs.getString('api_key') ?? "";
   params['nonce'] = nonce().toString();
@@ -139,25 +139,51 @@ class _MyHomePageState extends State<MyHomePage> {
 	      children: <Widget>[
                 GestureDetector(
                   onTap: () {
+		    TextEditingController amountValue = TextEditingController();
+		    TextEditingController msgValue = TextEditingController();
+                    TextEditingController emailValue = TextEditingController();
                     Alert(
                       context: context,
                       title: "Recieve",
                       content: Column(
 			children: <Widget>[
 			  TextField(
+                            controller: amountValue,
 			    decoration: InputDecoration(
 			      icon: Icon(Icons.monetization_on),
 			      labelText: "amount"
 			    )
 			  ),
 			  TextField(
+                            controller: msgValue,
 			    decoration: InputDecoration(
 			      icon: Icon(Icons.message),
 			      labelText: "message"
 			    )
 			  ),
+			  TextField(
+                            controller: emailValue,
+			    decoration: InputDecoration(
+			      icon: Icon(Icons.message),
+			      labelText: "email"
+			    )
+			  ),
 			],
                       ),
+                      buttons: [
+                        DialogButton(
+                          onPressed: () async {
+                            postPayDb('payment_create', {"recipient": emailValue.text, "amount": (double.parse(amountValue.text) * 100), "message": 1, "reason": msgValue.text, "category": "testing"});
+                            Navigator.of(context, rootNavigator: true).pop();
+                            Alert(
+                              context: context,
+                              title: "Sent",
+                              content: Text("Sent payment"),
+                            ).show();
+                          },
+                          child: Text("OK")
+                        ),
+                      ],
                     ).show();
                   },
                   child: 
