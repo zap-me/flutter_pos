@@ -8,6 +8,13 @@ import 'dart:convert';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'dart:typed_data';
 import 'dart:html';
+import 'package:qr_code_scanner/qr_code_scanner.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:web_socket_channel/status.dart' as status;
+import 'dart:io';
+import 'package:web_socket_channel/io.dart';
+
 
 const URL_BASE = "https://mtoken-test.zap.me/";
 const WS_URL = "wss://mtoken-test.zap.me/paydb";
@@ -26,10 +33,18 @@ int nonce() {
 }
 
 Future<void> setUpWS() async {
-  var webSocket = new WebSocket(WS_URL);
-  webSocket.onMessage.listen((MessageEvent e) {
-    print(e.data);
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  String apiKeyAuth = await prefs.getString('api_key') ?? "";
+  var nonceVal = nonce(); 
+  var sig = sign("${nonceVal}");
+  Map<String, dynamic> authHeaders = {"signature" : sig, "api_key" : apiKeyAuth, "nonce": "${nonceVal}" };
+  var channel = IOWebSocketChannel.connect(Uri.parse(WS_URL), headers: authHeaders);
+  channel.stream.listen((message) {
+    channel.sink.add('received!');
+    print('got message');
+    channel.sink.close(status.goingAway);
   });
+
 }
 
 Future<void> initApiKeys() async {
@@ -100,6 +115,8 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
+  QRViewController? controller;
   int _counter = 0;
 
   void _incrementCounter() {
@@ -144,7 +161,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     TextEditingController emailValue = TextEditingController();
                     Alert(
                       context: context,
-                      title: "Recieve",
+                      title: "Send",
                       content: Column(
 			children: <Widget>[
 			  TextField(
@@ -173,7 +190,22 @@ class _MyHomePageState extends State<MyHomePage> {
                       buttons: [
                         DialogButton(
                           onPressed: () async {
-                            postPayDb('payment_create', {"recipient": emailValue.text, "amount": (double.parse(amountValue.text) * 100), "message": 1, "reason": msgValue.text, "category": "testing"});
+                            String cameraScanResult = "";
+                            void setQRController(QRViewController controller) {
+                              this.controller = controller;
+			      controller.scannedDataStream.listen((scanData) {
+				  cameraScanResult = scanData.code;
+				  postPayDb('payment_create', {"recipient": cameraScanResult, "amount": (double.parse(amountValue.text) * 100), "message": 1, "reason": msgValue.text, "category": "testing"});
+			      });
+                            }
+                            Alert(
+                              context: context,
+                              title: "Scan email",
+                              content: QRView(
+                                key: qrKey,
+                                onQRViewCreated: setQRController,
+                              ),
+                            ).show();
                             Navigator.of(context, rootNavigator: true).pop();
                             Alert(
                               context: context,
@@ -188,7 +220,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   },
                   child: 
 		    Container(
-		      child: Text("↙️", textAlign: TextAlign.center, style: TextStyle(fontSize: 50)),
+		      child: FaIcon(FontAwesomeIcons.chevronUp),
 		      alignment: Alignment.center,
 		      width: 90.0,
 		      height: 90.0,
@@ -202,7 +234,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     TextEditingController msgValue = TextEditingController();
                     Alert(
                       context: context,
-                      title: "Send",
+                      title: "Recieve",
                       content: Column(
 			children: <Widget>[
 			  TextField(
@@ -247,7 +279,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   },
                   child: 
 		    Container(
-                      child: Text("↗️", textAlign: TextAlign.center, style: TextStyle(fontSize: 50)),
+		      child: FaIcon(FontAwesomeIcons.chevronDown),
 		      alignment: Alignment.center,
 		      width: 90.0,
 		      height: 90.0,
@@ -261,7 +293,7 @@ class _MyHomePageState extends State<MyHomePage> {
               mainAxisAlignment: MainAxisAlignment.center,
 	      children: <Widget>[
 		Container(
-                  child: Icon(Icons.card_giftcard, size: 40, color: Colors.white),
+		  child: FaIcon(FontAwesomeIcons.gifts),
                   alignment: Alignment.center,
 		  width: 90.0,
 		  height: 90.0,
@@ -270,6 +302,7 @@ class _MyHomePageState extends State<MyHomePage> {
 		SizedBox(width: 100),
                 GestureDetector(
                   onTap: () async {
+                    final _formKey = GlobalKey<FormState>();
                     SharedPreferences prefs = await SharedPreferences.getInstance();
                     TextEditingController apiValue = TextEditingController(text: await prefs.getString('api_key'));
                     TextEditingController secretValue = TextEditingController(text: await prefs.getString('secret'));
@@ -278,39 +311,63 @@ class _MyHomePageState extends State<MyHomePage> {
                       context: context,
                       title: "Settings",
                       content: Column(
-			children: <Widget>[
-			  TextField(
-                            controller: apiValue,
-			    decoration: InputDecoration(
-			      icon: Icon(Icons.vpn_key),
-			      labelText: "apikey"
-			    )
-			  ),
-			  TextField(
-                            controller: secretValue,
-			    decoration: InputDecoration(
-			      icon: Icon(Icons.lock),
-			      labelText: "secret"
-			    )
-			  ),
-			  TextField(
-                            controller: tickerValue,
-			    decoration: InputDecoration(
-			      icon: Icon(Icons.create_rounded),
-			      labelText: "asset name"
-			    )
-			  ),
-                          Text('Server: ${URL_BASE}'),
-			],
+                        children: <Widget>[
+                          Form(
+                            key: _formKey,
+                            child: Column(
+			      children: <Widget>[
+				TextFormField(
+				  controller: apiValue,
+				  validator: (value) {
+				    if(value == null || value.isEmpty) {
+				      return "please enter an api-key";
+				    }
+				  },
+				  decoration: InputDecoration(
+				    icon: Icon(Icons.vpn_key),
+				    labelText: "apikey"
+				  )
+				),
+				TextFormField(
+				  controller: secretValue,
+				  validator: (value) {
+				    if(value!.isEmpty) {
+				      return "please enter a secret";
+				    }
+				  },
+				  decoration: InputDecoration(
+				    icon: Icon(Icons.lock),
+				    labelText: "secret"
+				  )
+				),
+				TextFormField(
+				  controller: tickerValue,
+				  validator: (value) {
+				    if(value!.isEmpty) {
+				      return "please enter an asset ticker";
+				    }
+				  },
+				  decoration: InputDecoration(
+				    icon: Icon(Icons.create_rounded),
+				    labelText: "asset name"
+				  )
+				),
+				Text('Server: ${URL_BASE}'),
+			      ],
+                            ),
+                          ),
+                        ]
                       ),
                       buttons: [
                         DialogButton(
                           onPressed: () async {
-                            await prefs.setString('api_key', apiValue.text);
-                            await prefs.setString('secret', secretValue.text);
-                            await prefs.setString('asset-ticker', tickerValue.text);
-                            callUserInfo();
-                            Navigator.of(context, rootNavigator: true).pop();
+                            if (_formKey.currentState!.validate()) {
+			      await prefs.setString('api_key', apiValue.text);
+			      await prefs.setString('secret', secretValue.text);
+			      await prefs.setString('asset-ticker', tickerValue.text);
+			      callUserInfo();
+			      Navigator.of(context, rootNavigator: true).pop();
+                            }
                           },
                           child: Text("OK")
                         ),
@@ -319,7 +376,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   },
                   child: 
 		    Container(
-                      child: Icon(Icons.settings, size: 40, color: Colors.white),
+		      child: FaIcon(FontAwesomeIcons.slidersH),
 		      alignment: Alignment.center,
 		      width: 90.0,
 		      height: 90.0,
