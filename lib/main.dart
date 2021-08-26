@@ -248,8 +248,9 @@ class _MyHomePageState extends State<MyHomePage> {
                               content: Column(
                                 children: <Widget>[
                                   QrImage(
-                                    data:
-                                        'premiofrankie://mtokentest@protonmail.com?amount=${int.parse(amountValue.text) * 100}&attachment={"invoiceid":"${msgValue.text}"}',
+                                    data: 'premiofrankie://' +
+                                        posEmail +
+                                        "?amount=${int.parse(amountValue.text) * 100}&attachment={'invoiceid':'${msgValue.text}'}",
                                     version: QrVersions.auto,
                                     size: 180,
                                     gapless: false,
