@@ -2,19 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:rflutter_alert/rflutter_alert.dart';
-import 'dart:developer';
 import 'package:crypto/crypto.dart';
 import 'dart:convert';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'dart:typed_data';
-import 'dart:html';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:web_socket_channel/status.dart' as status;
-import 'dart:io';
 import 'package:web_socket_channel/io.dart';
-
 
 const URL_BASE = "https://mtoken-test.zap.me/";
 const WS_URL = "wss://mtoken-test.zap.me/paydb";
@@ -24,7 +19,7 @@ String posEmail = "";
 void main() async {
   initApiKeys();
   await callUserInfo();
-  setUpWS(); 
+  setUpWS();
   runApp(MyApp());
 }
 
@@ -34,17 +29,21 @@ int nonce() {
 
 Future<void> setUpWS() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
-  String apiKeyAuth = await prefs.getString('api_key') ?? "";
-  var nonceVal = nonce(); 
-  var sig = sign("${nonceVal}");
-  Map<String, dynamic> authHeaders = {"signature" : sig, "api_key" : apiKeyAuth, "nonce": "${nonceVal}" };
-  var channel = IOWebSocketChannel.connect(Uri.parse(WS_URL), headers: authHeaders);
+  String apiKeyAuth = prefs.getString('api_key') ?? "";
+  String nonceVal = nonce().toString();
+  var sig = sign(nonceVal);
+  Map<String, dynamic> authHeaders = {
+    "signature": sig,
+    "api_key": apiKeyAuth,
+    "nonce": nonceVal
+  };
+  var channel =
+      IOWebSocketChannel.connect(Uri.parse(WS_URL), headers: authHeaders);
   channel.stream.listen((message) {
     channel.sink.add('received!');
     print('got message');
     channel.sink.close(status.goingAway);
   });
-
 }
 
 Future<void> initApiKeys() async {
@@ -52,7 +51,7 @@ Future<void> initApiKeys() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
   await prefs.setString('api_key', 'bgPfjilKLfk');
   await prefs.setString('secret', 'Zw_EayWw_CZ0M-L3ril9uA');
-  await prefs.setString('asset-ticker','FRT');
+  await prefs.setString('asset-ticker', 'FRT');
 }
 
 Future<void> callUserInfo() async {
@@ -60,7 +59,7 @@ Future<void> callUserInfo() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
   String nonceRes = nonce().toString();
   await prefs.setString('nonce', nonceRes);
-  dynamic response = await postPayDb("paydb/user_info", {"email" : null});
+  dynamic response = await postPayDb("paydb/user_info", {"email": null});
   response = jsonDecode(response.body);
   print("response is ${response.map}");
   base64EncodedPic = response["photo"];
@@ -77,18 +76,19 @@ Future<String> sign(data) async {
   return base64.encode(bytesDigest.bytes);
 }
 
-Future<dynamic> postPayDb(String endpoint, Map<String, dynamic?> params) async {
+Future<dynamic> postPayDb(String endpoint, Map<String, dynamic> params) async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
-  params['api_key'] = await prefs.getString('api_key') ?? "";
+  params['api_key'] = prefs.getString('api_key') ?? "";
   params['nonce'] = nonce().toString();
   var mapInJsonString = json.encode(params);
   var sig = await sign(mapInJsonString);
   Map<String, String> customHeaders = {
-    "Content-Type" : "application/json",
-    "X-Signature" : sig
+    "Content-Type": "application/json",
+    "X-Signature": sig
   };
   Uri url = Uri.parse(URL_BASE + endpoint);
-  var response = await http.post(url, headers: customHeaders, body: json.encode(params));
+  var response =
+      await http.post(url, headers: customHeaders, body: json.encode(params));
   return response;
 }
 
@@ -117,13 +117,6 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
   QRViewController? controller;
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -140,64 +133,62 @@ class _MyHomePageState extends State<MyHomePage> {
               width: 360.0,
               height: 90.0,
               color: Colors.grey,
-              child: 
-                Row(
-                  children: <Widget>[
-		    Card(
-		      child: Image.memory(bytes, fit: BoxFit.cover),
-		    ),
-                    Text(posEmail),
-                  ],
-                ),
+              child: Row(
+                children: <Widget>[
+                  Card(
+                    child: Image.memory(bytes, fit: BoxFit.cover),
+                  ),
+                  Text(posEmail),
+                ],
+              ),
             ),
             SizedBox(height: 80),
-	    Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-	      children: <Widget>[
-                GestureDetector(
-                  onTap: () {
-		    TextEditingController amountValue = TextEditingController();
-		    TextEditingController msgValue = TextEditingController();
-                    TextEditingController emailValue = TextEditingController();
-                    Alert(
-                      context: context,
-                      title: "Send",
-                      content: Column(
-			children: <Widget>[
-			  TextField(
+            Row(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
+              GestureDetector(
+                onTap: () {
+                  TextEditingController amountValue = TextEditingController();
+                  TextEditingController msgValue = TextEditingController();
+                  TextEditingController emailValue = TextEditingController();
+                  Alert(
+                    context: context,
+                    title: "Send",
+                    content: Column(
+                      children: <Widget>[
+                        TextField(
                             controller: amountValue,
-			    decoration: InputDecoration(
-			      icon: Icon(Icons.monetization_on),
-			      labelText: "amount"
-			    )
-			  ),
-			  TextField(
+                            decoration: InputDecoration(
+                                icon: Icon(Icons.monetization_on),
+                                labelText: "amount")),
+                        TextField(
                             controller: msgValue,
-			    decoration: InputDecoration(
-			      icon: Icon(Icons.message),
-			      labelText: "message"
-			    )
-			  ),
-			  TextField(
+                            decoration: InputDecoration(
+                                icon: Icon(Icons.message),
+                                labelText: "message")),
+                        TextField(
                             controller: emailValue,
-			    decoration: InputDecoration(
-			      icon: Icon(Icons.message),
-			      labelText: "email"
-			    )
-			  ),
-			],
-                      ),
-                      buttons: [
-                        DialogButton(
+                            decoration: InputDecoration(
+                                icon: Icon(Icons.message), labelText: "email")),
+                      ],
+                    ),
+                    buttons: [
+                      DialogButton(
                           onPressed: () async {
                             String cameraScanResult = "";
                             void setQRController(QRViewController controller) {
                               this.controller = controller;
-			      controller.scannedDataStream.listen((scanData) {
-				  cameraScanResult = scanData.code;
-				  postPayDb('payment_create', {"recipient": cameraScanResult, "amount": (double.parse(amountValue.text) * 100), "message": 1, "reason": msgValue.text, "category": "testing"});
-			      });
+                              controller.scannedDataStream.listen((scanData) {
+                                cameraScanResult = scanData.code;
+                                postPayDb('payment_create', {
+                                  "recipient": cameraScanResult,
+                                  "amount":
+                                      (double.parse(amountValue.text) * 100),
+                                  "message": 1,
+                                  "reason": msgValue.text,
+                                  "category": "testing"
+                                });
+                              });
                             }
+
                             Alert(
                               context: context,
                               title: "Scan email",
@@ -213,48 +204,42 @@ class _MyHomePageState extends State<MyHomePage> {
                               content: Text("Sent payment"),
                             ).show();
                           },
-                          child: Text("OK")
-                        ),
-                      ],
-                    ).show();
-                  },
-                  child: 
-		    Container(
-		      child: FaIcon(FontAwesomeIcons.chevronUp),
-		      alignment: Alignment.center,
-		      width: 90.0,
-		      height: 90.0,
-		      color: Colors.blue,
-		    ),
+                          child: Text("OK")),
+                    ],
+                  ).show();
+                },
+                child: Container(
+                  child: FaIcon(FontAwesomeIcons.chevronUp),
+                  alignment: Alignment.center,
+                  width: 90.0,
+                  height: 90.0,
+                  color: Colors.blue,
                 ),
-		SizedBox(width: 100),
-                GestureDetector(
-                  onTap: () {
-                    TextEditingController amountValue = TextEditingController();
-                    TextEditingController msgValue = TextEditingController();
-                    Alert(
-                      context: context,
-                      title: "Recieve",
-                      content: Column(
-			children: <Widget>[
-			  TextField(
+              ),
+              SizedBox(width: 100),
+              GestureDetector(
+                onTap: () {
+                  TextEditingController amountValue = TextEditingController();
+                  TextEditingController msgValue = TextEditingController();
+                  Alert(
+                    context: context,
+                    title: "Recieve",
+                    content: Column(
+                      children: <Widget>[
+                        TextField(
                             controller: amountValue,
-			    decoration: InputDecoration(
-			      icon: Icon(Icons.monetization_on),
-			      labelText: "amount"
-			    )
-			  ),
-			  TextField(
+                            decoration: InputDecoration(
+                                icon: Icon(Icons.monetization_on),
+                                labelText: "amount")),
+                        TextField(
                             controller: msgValue,
-			    decoration: InputDecoration(
-			      icon: Icon(Icons.message),
-			      labelText: "message"
-			    )
-			  ),
-			],
-                      ),
-                      buttons: [
-                        DialogButton(
+                            decoration: InputDecoration(
+                                icon: Icon(Icons.message),
+                                labelText: "message")),
+                      ],
+                    ),
+                    buttons: [
+                      DialogButton(
                           onPressed: () async {
                             Navigator.of(context, rootNavigator: true).pop();
                             Alert(
@@ -263,136 +248,126 @@ class _MyHomePageState extends State<MyHomePage> {
                               content: Column(
                                 children: <Widget>[
                                   QrImage(
-				    data: 'premiofrankie://mtokentest@protonmail.com?amount=${int.parse(amountValue.text)*100}&attachment={"invoiceid":"${msgValue.text}"}',
-				    version: QrVersions.auto,
-				    size: 180,
-				    gapless: false,
-				  )
+                                    data:
+                                        'premiofrankie://mtokentest@protonmail.com?amount=${int.parse(amountValue.text) * 100}&attachment={"invoiceid":"${msgValue.text}"}',
+                                    version: QrVersions.auto,
+                                    size: 180,
+                                    gapless: false,
+                                  )
                                 ],
                               ),
                             ).show();
                           },
-                          child: Text("OK")
-                        ),
-                      ],
-                    ).show();
-                  },
-                  child: 
-		    Container(
-		      child: FaIcon(FontAwesomeIcons.chevronDown),
-		      alignment: Alignment.center,
-		      width: 90.0,
-		      height: 90.0,
-		      color: Colors.blue,
-		    ),
-                ),
-	      ]
-	    ),
-            SizedBox(height: 100),
-	    Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-	      children: <Widget>[
-		Container(
-		  child: FaIcon(FontAwesomeIcons.gifts),
+                          child: Text("OK")),
+                    ],
+                  ).show();
+                },
+                child: Container(
+                  child: FaIcon(FontAwesomeIcons.chevronDown),
                   alignment: Alignment.center,
-		  width: 90.0,
-		  height: 90.0,
+                  width: 90.0,
+                  height: 90.0,
                   color: Colors.blue,
-		),
-		SizedBox(width: 100),
+                ),
+              ),
+            ]),
+            SizedBox(height: 100),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                Container(
+                  child: FaIcon(FontAwesomeIcons.gifts),
+                  alignment: Alignment.center,
+                  width: 90.0,
+                  height: 90.0,
+                  color: Colors.blue,
+                ),
+                SizedBox(width: 100),
                 GestureDetector(
                   onTap: () async {
                     final _formKey = GlobalKey<FormState>();
-                    SharedPreferences prefs = await SharedPreferences.getInstance();
-                    TextEditingController apiValue = TextEditingController(text: await prefs.getString('api_key'));
-                    TextEditingController secretValue = TextEditingController(text: await prefs.getString('secret'));
-                    TextEditingController tickerValue = TextEditingController(text: await prefs.getString('asset-ticker'));
+                    SharedPreferences prefs =
+                        await SharedPreferences.getInstance();
+                    TextEditingController apiValue =
+                        TextEditingController(text: prefs.getString('api_key'));
+                    TextEditingController secretValue =
+                        TextEditingController(text: prefs.getString('secret'));
+                    TextEditingController tickerValue = TextEditingController(
+                        text: prefs.getString('asset-ticker'));
                     Alert(
                       context: context,
                       title: "Settings",
-                      content: Column(
-                        children: <Widget>[
-                          Form(
-                            key: _formKey,
-                            child: Column(
-			      children: <Widget>[
-				TextFormField(
-				  controller: apiValue,
-				  validator: (value) {
-				    if(value == null || value.isEmpty) {
-				      return "please enter an api-key";
-				    }
-				  },
-				  decoration: InputDecoration(
-				    icon: Icon(Icons.vpn_key),
-				    labelText: "apikey"
-				  )
-				),
-				TextFormField(
-				  controller: secretValue,
-				  validator: (value) {
-				    if(value!.isEmpty) {
-				      return "please enter a secret";
-				    }
-				  },
-				  decoration: InputDecoration(
-				    icon: Icon(Icons.lock),
-				    labelText: "secret"
-				  )
-				),
-				TextFormField(
-				  controller: tickerValue,
-				  validator: (value) {
-				    if(value!.isEmpty) {
-				      return "please enter an asset ticker";
-				    }
-				  },
-				  decoration: InputDecoration(
-				    icon: Icon(Icons.create_rounded),
-				    labelText: "asset name"
-				  )
-				),
-				Text('Server: ${URL_BASE}'),
-			      ],
-                            ),
+                      content: Column(children: <Widget>[
+                        Form(
+                          key: _formKey,
+                          child: Column(
+                            children: <Widget>[
+                              TextFormField(
+                                  controller: apiValue,
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return "please enter an api-key";
+                                    }
+                                  },
+                                  decoration: InputDecoration(
+                                      icon: Icon(Icons.vpn_key),
+                                      labelText: "apikey")),
+                              TextFormField(
+                                  controller: secretValue,
+                                  validator: (value) {
+                                    if (value!.isEmpty) {
+                                      return "please enter a secret";
+                                    }
+                                  },
+                                  decoration: InputDecoration(
+                                      icon: Icon(Icons.lock),
+                                      labelText: "secret")),
+                              TextFormField(
+                                  controller: tickerValue,
+                                  validator: (value) {
+                                    if (value!.isEmpty) {
+                                      return "please enter an asset ticker";
+                                    }
+                                  },
+                                  decoration: InputDecoration(
+                                      icon: Icon(Icons.create_rounded),
+                                      labelText: "asset name")),
+                              Text('Server: ' + URL_BASE),
+                            ],
                           ),
-                        ]
-                      ),
+                        ),
+                      ]),
                       buttons: [
                         DialogButton(
-                          onPressed: () async {
-                            if (_formKey.currentState!.validate()) {
-			      await prefs.setString('api_key', apiValue.text);
-			      await prefs.setString('secret', secretValue.text);
-			      await prefs.setString('asset-ticker', tickerValue.text);
-			      callUserInfo();
-			      Navigator.of(context, rootNavigator: true).pop();
-                            }
-                          },
-                          child: Text("OK")
-                        ),
+                            onPressed: () async {
+                              if (_formKey.currentState!.validate()) {
+                                await prefs.setString('api_key', apiValue.text);
+                                await prefs.setString(
+                                    'secret', secretValue.text);
+                                await prefs.setString(
+                                    'asset-ticker', tickerValue.text);
+                                callUserInfo();
+                                Navigator.of(context, rootNavigator: true)
+                                    .pop();
+                              }
+                            },
+                            child: Text("OK")),
                       ],
                     ).show();
                   },
-                  child: 
-		    Container(
-		      child: FaIcon(FontAwesomeIcons.slidersH),
-		      alignment: Alignment.center,
-		      width: 90.0,
-		      height: 90.0,
-		      color: Colors.blue,
-		    ),
+                  child: Container(
+                    child: FaIcon(FontAwesomeIcons.slidersH),
+                    alignment: Alignment.center,
+                    width: 90.0,
+                    height: 90.0,
+                    color: Colors.blue,
+                  ),
                 ),
-	      ],
-	    ),
-          ],
+              ],
             ),
+          ],
         ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+      ),
     );
   }
 }
