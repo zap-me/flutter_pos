@@ -31,7 +31,7 @@ Future<void> setUpWS() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
   String apiKeyAuth = prefs.getString('api_key') ?? "";
   String nonceVal = nonce().toString();
-  var sig = sign(nonceVal);
+  var sig = await sign(nonceVal);
   Map<String, dynamic> authHeaders = {
     "signature": sig,
     "api_key": apiKeyAuth,
@@ -61,7 +61,6 @@ Future<void> callUserInfo() async {
   await prefs.setString('nonce', nonceRes);
   dynamic response = await postPayDb("paydb/user_info", {"email": null});
   response = jsonDecode(response.body);
-  print("response is ${response.map}");
   base64EncodedPic = response["photo"];
   posEmail = response["email"];
   //return {"base64EncodedPic" : response.body.image};
