@@ -29,6 +29,7 @@ dependencies:
   qr_code_scanner: ^0.5.2
   font_awesome_flutter: ^9.0.0-nullsafety
   web_socket_channel: ^2.1.0
+  universal_platform: ^1.0.0+1
   flutter:
     sdk: flutter
 

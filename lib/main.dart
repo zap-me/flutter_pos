@@ -9,10 +9,12 @@ import 'dart:typed_data';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:web_socket_channel/status.dart' as status;
-import 'package:web_socket_channel/io.dart';
+import 'package:web_socket_channel/html.dart';
+import 'package:universal_platform/universal_platform.dart';
+import 'dart:js';
 
 const URL_BASE = "https://mtoken-test.zap.me/";
-const WS_URL = "wss://mtoken-test.zap.me/paydb";
+const WS_URL = "https://mtoken-test.zap.me/paydb";
 String base64EncodedPic = "";
 String posEmail = "";
 
@@ -28,22 +30,7 @@ int nonce() {
 }
 
 Future<void> setUpWS() async {
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  String apiKeyAuth = prefs.getString('api_key') ?? "";
-  String nonceVal = nonce().toString();
-  var sig = await sign(nonceVal);
-  Map<String, dynamic> authHeaders = {
-    "signature": sig,
-    "api_key": apiKeyAuth,
-    "nonce": nonceVal
-  };
-  var channel =
-      IOWebSocketChannel.connect(Uri.parse(WS_URL), headers: authHeaders);
-  channel.stream.listen((message) {
-    channel.sink.add('received!');
-    print('got message');
-    channel.sink.close(status.goingAway);
-  });
+  context.callMethod('initConnection', [WS_URL]);
 }
 
 Future<void> initApiKeys() async {
@@ -171,7 +158,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     ),
                     buttons: [
                       DialogButton(
-                          onPressed: () async {
+                          onPressed: () {
                             String cameraScanResult = "";
                             void setQRController(QRViewController controller) {
                               this.controller = controller;
