@@ -8,10 +8,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'dart:typed_data';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:web_socket_channel/status.dart' as status;
-import 'package:web_socket_channel/html.dart';
-import 'package:universal_platform/universal_platform.dart';
-import 'dart:js';
+import 'package:universal_html/js.dart';
 
 const URL_BASE = "https://mtoken-test.zap.me/";
 const WS_URL = "https://mtoken-test.zap.me/paydb";
