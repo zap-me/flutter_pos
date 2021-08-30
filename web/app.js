@@ -23,5 +23,12 @@ window.initConnection = async function(wsUrl) {
       // emit auth message
       socket.emit('auth', auth);
   });
+
+  socket.on('tx', (arg) => {
+      var tx = JSON.parse(arg);
+      console.log(`tx is ${tx}`);
+    }
+  );
 }
+
 
