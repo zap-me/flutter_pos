@@ -45,6 +45,15 @@ Future<void> setUpWS() async {
   socket.on('tx', (data) {
     print(data);
   });
+  socket.on('connecting', (_) {
+    print('ws connecting');
+  });
+  socket.on('connect_error', (err) {
+    print('ws connect error ($err)');
+  });
+  socket.on('connect_timeout', (_) {
+    print('ws connect timeout');
+  });
 }
 
 Future<void> initApiKeys() async {
