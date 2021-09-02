@@ -8,7 +8,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'dart:typed_data';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:universal_html/js.dart';
+import 'package:socket_io_client/socket_io_client.dart' as IO;
 
 const URL_BASE = "https://mtoken-test.zap.me/";
 const WS_URL = "https://mtoken-test.zap.me/paydb";
@@ -27,7 +27,10 @@ int nonce() {
 }
 
 Future<void> setUpWS() async {
-  context.callMethod('initConnection', [WS_URL]);
+  IO.Socket socket = IO.io(WS_URL);
+  socket.onConnect((_) {
+    print('connect');
+  });
 }
 
 Future<void> initApiKeys() async {
