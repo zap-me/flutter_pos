@@ -28,16 +28,22 @@ int nonce() {
 
 Future<void> setUpWS() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
-  IO.Socket socket = IO.io(WS_URL);
+  IO.Socket socket = IO.io(WS_URL, <String, dynamic>{
+    'secure': true,
+    'transports': ['websocket'],
+  });
   int currentNonce = nonce();
   String signature = await sign(currentNonce.toString());
   socket.onConnect((_) {
-    print('connect');
     socket.emit('auth', {
       "signature": signature,
       "api_key": prefs.getString("api_key"),
       "nonce": currentNonce
     });
+    print('connect');
+  });
+  socket.on('tx', (data) {
+    print(data);
   });
 }
 
