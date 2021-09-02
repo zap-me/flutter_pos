@@ -27,9 +27,17 @@ int nonce() {
 }
 
 Future<void> setUpWS() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
   IO.Socket socket = IO.io(WS_URL);
+  int currentNonce = nonce();
+  String signature = await sign(currentNonce.toString());
   socket.onConnect((_) {
     print('connect');
+    socket.emit('auth', {
+      "signature": signature,
+      "api_key": prefs.getString("api_key"),
+      "nonce": currentNonce
+    });
   });
 }
 
