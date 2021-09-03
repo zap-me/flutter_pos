@@ -18,7 +18,6 @@ String posEmail = "";
 void main() async {
   initApiKeys();
   await callUserInfo();
-  setUpWS();
   runApp(MyApp());
 }
 
@@ -26,7 +25,7 @@ int nonce() {
   return DateTime.now().toUtc().millisecondsSinceEpoch;
 }
 
-Future<void> setUpWS() async {
+Future<void> setUpWS(BuildContext context) async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
   IO.Socket socket = IO.io(WS_URL, <String, dynamic>{
     'secure': true,
@@ -40,6 +39,11 @@ Future<void> setUpWS() async {
       "api_key": prefs.getString("api_key"),
       "nonce": currentNonce
     });
+    Alert(
+      context: context,
+      title: "Connected",
+      content: Text("Now connected"),
+    ).show();
     print('connect');
   });
   socket.on('tx', (data) {
@@ -129,6 +133,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    setUpWS(context);
     Uint8List bytes = Base64Codec().decode(base64EncodedPic);
     return Scaffold(
       appBar: AppBar(
