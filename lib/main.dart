@@ -160,65 +160,74 @@ class _MyHomePageState extends State<MyHomePage> {
             Row(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
               GestureDetector(
                 onTap: () {
+                  final _formKey = GlobalKey<FormState>();
                   TextEditingController amountValue = TextEditingController();
                   TextEditingController msgValue = TextEditingController();
                   TextEditingController emailValue = TextEditingController();
                   Alert(
                     context: context,
                     title: "Send",
-                    content: Column(
-                      children: <Widget>[
-                        TextField(
-                            controller: amountValue,
-                            decoration: InputDecoration(
-                                icon: Icon(Icons.monetization_on),
-                                labelText: "amount")),
-                        TextField(
-                            controller: msgValue,
-                            decoration: InputDecoration(
-                                icon: Icon(Icons.message),
-                                labelText: "message")),
-                        TextField(
-                            controller: emailValue,
-                            decoration: InputDecoration(
-                                icon: Icon(Icons.message), labelText: "email")),
-                      ],
-                    ),
+                      content: Column(children: <Widget>[
+                        Form(
+                          key: _formKey,
+                          child: Column(
+                            children: <Widget>[
+                              TextFormField(
+                                  controller: amountValue,
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return "please enter an amount";
+                                    }
+                                  },
+                                  decoration: InputDecoration(
+                                      icon: Icon(Icons.monetization_on),
+                                      labelText: "amount")),
+                              TextFormField(
+                                  controller: msgValue,
+                                  validator: (value) {
+                                    if (value!.isEmpty) {
+                                      return "please enter a tx message";
+                                    }
+                                  },
+                                  decoration: InputDecoration(
+                                      icon: Icon(Icons.lock),
+                                      labelText: "message")),
+                              TextFormField(
+                                  controller: emailValue,
+                                  validator: (value) {
+                                    if (value!.isEmpty) {
+                                      return "please enter a receiver email";
+                                    }
+                                  },
+                                  decoration: InputDecoration(
+                                      icon: Icon(Icons.create_rounded),
+                                      labelText: "recipient")),
+                            ],
+                          ),
+                        ),
+                      ]),
                     buttons: [
-                      DialogButton(
-                          onPressed: () {
-                            String cameraScanResult = "";
-                            void setQRController(QRViewController controller) {
-                              this.controller = controller;
-                              controller.scannedDataStream.listen((scanData) {
-                                cameraScanResult = scanData.code;
-                                postPayDb('payment_create', {
-                                  "recipient": cameraScanResult,
-                                  "amount":
-                                      (double.parse(amountValue.text) * 100),
-                                  "message": 1,
-                                  "reason": msgValue.text,
-                                  "category": "testing"
-                                });
-                              });
-                            }
-
-                            Alert(
-                              context: context,
-                              title: "Scan email",
-                              content: QRView(
-                                key: qrKey,
-                                onQRViewCreated: setQRController,
-                              ),
-                            ).show();
-                            Navigator.of(context, rootNavigator: true).pop();
-                            Alert(
-                              context: context,
-                              title: "Sent",
-                              content: Text("Sent payment"),
-                            ).show();
-                          },
-                          child: Text("OK")),
+			  DialogButton(
+			      child: Text("OK"),
+			      onPressed: () async {
+				if (_formKey.currentState!.validate()) {
+				  postPayDb('payment_create', {
+				    "recipient": emailValue.text,
+				    "amount":
+					(double.parse(amountValue.text) * 100),
+				    "message": 1,
+				    "reason": msgValue.text,
+				    "category": "testing"
+				  });
+				  Navigator.of(context, rootNavigator: true).pop();
+				  Alert(
+				    context: context,
+				    title: "Sent",
+				    content: Text("Sent payment"),
+				  ).show();
+				}
+			      },
+                          ),
                     ],
                   ).show();
                 },
