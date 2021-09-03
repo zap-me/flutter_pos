@@ -190,7 +190,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                   }
                                 },
                                 decoration: InputDecoration(
-                                    icon: Icon(Icons.lock),
+                                    icon: Icon(Icons.message),
                                     labelText: "message")),
                             TextFormField(
                                 controller: emailValue,
@@ -241,45 +241,63 @@ class _MyHomePageState extends State<MyHomePage> {
               SizedBox(width: 100),
               GestureDetector(
                 onTap: () {
+                  final _formKey = GlobalKey<FormState>();
                   TextEditingController amountValue = TextEditingController();
                   TextEditingController msgValue = TextEditingController();
                   Alert(
                     context: context,
                     title: "Recieve",
-                    content: Column(
-                      children: <Widget>[
-                        TextField(
-                            controller: amountValue,
-                            decoration: InputDecoration(
-                                icon: Icon(Icons.monetization_on),
-                                labelText: "amount")),
-                        TextField(
-                            controller: msgValue,
-                            decoration: InputDecoration(
-                                icon: Icon(Icons.message),
-                                labelText: "message")),
-                      ],
-                    ),
+                    content: Column(children: <Widget>[
+                      Form(
+                        key: _formKey,
+                        child: Column(
+                          children: <Widget>[
+                            TextFormField(
+                                controller: amountValue,
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return "please enter an amount";
+                                  }
+                                },
+                                decoration: InputDecoration(
+                                    icon: Icon(Icons.monetization_on),
+                                    labelText: "amount")),
+                            TextFormField(
+                                controller: msgValue,
+                                validator: (value) {
+                                  if (value!.isEmpty) {
+                                    return "please enter a tx message";
+                                  }
+                                },
+                                decoration: InputDecoration(
+                                    icon: Icon(Icons.message),
+                                    labelText: "message")),
+                          ],
+                        ),
+                      ),
+                    ]),
                     buttons: [
                       DialogButton(
                           onPressed: () async {
-                            Navigator.of(context, rootNavigator: true).pop();
-                            Alert(
-                              context: context,
-                              title: "Pressed",
-                              content: Column(
-                                children: <Widget>[
-                                  QrImage(
-                                    data: 'premiofrankie://' +
-                                        posEmail +
-                                        "?amount=${int.parse(amountValue.text) * 100}&attachment={'invoiceid':'${msgValue.text}'}",
-                                    version: QrVersions.auto,
-                                    size: 180,
-                                    gapless: false,
-                                  )
-                                ],
-                              ),
-                            ).show();
+                            if (_formKey.currentState!.validate()) {
+                              Navigator.of(context, rootNavigator: true).pop();
+                              Alert(
+                                context: context,
+                                title: "Pressed",
+                                content: Column(
+                                  children: <Widget>[
+                                    QrImage(
+                                      data: 'premiofrankie://' +
+                                          posEmail +
+                                          "?amount=${int.parse(amountValue.text) * 100}&attachment={'invoiceid':'${msgValue.text}'}",
+                                      version: QrVersions.auto,
+                                      size: 180,
+                                      gapless: false,
+                                    )
+                                  ],
+                                ),
+                              ).show();
+                            }
                           },
                           child: Text("OK")),
                     ],
