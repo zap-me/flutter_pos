@@ -39,15 +39,15 @@ Future<void> setUpWS(BuildContext context) async {
       "api_key": prefs.getString("api_key"),
       "nonce": currentNonce
     });
-    Alert(
-      context: context,
-      title: "Connected",
-      content: Text("Now connected"),
-    ).show();
     print('connect');
   });
   socket.on('tx', (data) {
     print(data);
+    Alert(
+      context: context,
+      title: "Transaction Recieved",
+      content: Text("Recieved Tx"),
+    ).show();
   });
   socket.on('connecting', (_) {
     print('ws connecting');
