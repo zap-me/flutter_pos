@@ -9,6 +9,7 @@ import 'dart:typed_data';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
+import 'package:bip39/bip39.dart' as bip39;
 
 const URL_BASE = "https://mtoken-test.zap.me/";
 const WS_URL = "https://mtoken-test.zap.me/paydb";
@@ -80,6 +81,15 @@ Future<void> callUserInfo() async {
   //return {"base64EncodedPic" : response.body.image};
 }
 
+Future<bool> checkIfPKSet() async {
+  bool returnResult = false;
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  if (prefs.containsKey('seed')) {
+    returnResult = true;
+  }
+  return returnResult;
+}
+
 Future<String> sign(data) async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
   var secretBytes = utf8.encode(prefs.getString('secret') ?? "");
@@ -130,12 +140,31 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
   QRViewController? controller;
+  bool? isPremio;
+  bool? alreadyHasPK = false;
+  String freshMnemonic = bip39.generateMnemonic();
+
+  void initState() {
+    isPremio = true;
+    alreadyHasPK = false;
+  }
 
   @override
   Widget build(BuildContext context) {
+  if(alreadyHasPK == false) {
+    () async {
+      bool isPKSet = await checkIfPKSet();
+      setState(
+        () {
+          alreadyHasPK = isPKSet;
+        }
+      );
+    };
+  }
     setUpWS(context);
     Uint8List bytes = Base64Codec().decode(base64EncodedPic);
-    return Scaffold(
+    return isPremio == true ?
+      Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
       ),
@@ -409,6 +438,46 @@ class _MyHomePageState extends State<MyHomePage> {
           ],
         ),
       ),
-    );
+      floatingActionButton: FloatingActionButton(
+	onPressed: () {
+          setState(
+            (){
+              isPremio = false;
+            }
+          );
+	},
+	child: const FaIcon(FontAwesomeIcons.bitcoin),
+	backgroundColor: Colors.amber,
+    ),
+    ) :
+      Scaffold(
+	appBar: AppBar(
+	  title: Text(widget.title),
+	),
+	body: alreadyHasPK == false ? Center(
+          child: Column(
+              children: <Widget>[
+                SizedBox(height: 100),
+                Text("${freshMnemonic}"),
+                SizedBox(height: 100),
+		DialogButton(
+		    onPressed: () async {
+		      SharedPreferences prefs = await SharedPreferences.getInstance();
+		      await prefs.setString('seed', freshMnemonic);
+                      setState(
+                        (){
+                          alreadyHasPK = true;
+                        }
+                      );
+                    },
+		    child: Text("SAVE")),
+                
+              ],
+            ),
+          ) : 
+          Center(
+          child: Text("already has PK")
+          ),
+        );
   }
 }
