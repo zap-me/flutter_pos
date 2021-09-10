@@ -10,6 +10,7 @@ import 'package:qr_code_scanner/qr_code_scanner.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:bip39/bip39.dart' as bip39;
+import 'globals.dart' as globals;
 
 const URL_BASE = "https://mtoken-test.zap.me/";
 const WS_URL = "https://mtoken-test.zap.me/paydb";
@@ -19,6 +20,7 @@ String posEmail = "";
 void main() async {
   initApiKeys();
   await callUserInfo();
+  globals.pkHasBeenSet = await checkIfPKSet();
   runApp(MyApp());
 }
 
@@ -141,12 +143,11 @@ class _MyHomePageState extends State<MyHomePage> {
   final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
   QRViewController? controller;
   bool? isPremio;
-  bool? alreadyHasPK = false;
+  bool? alreadyHasPK = globals.pkHasBeenSet;
   String freshMnemonic = bip39.generateMnemonic();
 
   void initState() {
     isPremio = true;
-    alreadyHasPK = false;
   }
 
   @override
@@ -458,7 +459,7 @@ class _MyHomePageState extends State<MyHomePage> {
           child: Column(
               children: <Widget>[
                 SizedBox(height: 100),
-                Text("${freshMnemonic}"),
+                Text(freshMnemonic),
                 SizedBox(height: 100),
 		DialogButton(
 		    onPressed: () async {
