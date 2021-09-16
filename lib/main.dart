@@ -466,7 +466,7 @@ class _MyHomePageState extends State<MyHomePage> {
 		DialogButton(
 		    onPressed: () async {
                       globals.privKey = bip39.mnemonicToSeedHex(freshMnemonic);
-                      Navigator.push(
+                      await Navigator.push(
                         context,
                         MaterialPageRoute(builder: (context) => PasswordPage()),
                       );
@@ -482,7 +482,13 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
           ) : 
           Center(
-          child: Text("priv key is ${globals.privKey}"),
+          child:
+	    QrImage(
+	      data: globals.segwitAddress,
+	      version: QrVersions.auto,
+	      size: 180,
+	      gapless: false,
+	    ),
           ),
         );
   }

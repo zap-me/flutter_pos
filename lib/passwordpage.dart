@@ -51,9 +51,8 @@ class PasswordPage extends StatelessWidget {
                               BIP32 nodeFromSeed = new BIP32.fromSeed(Uint8List.fromList(HEX.decode(convertedSeed)));
                               final node = nodeFromSeed.derivePath("m/84'/0'/0'/0/0");
                               final address = P2WPKH(data: new PaymentData(pubkey: node.publicKey)).data?.address;
+                              globals.segwitAddress = address ?? "";
                               print(address);
-                              var hdWallet = new HDWallet.fromSeed(Uint8List.fromList(HEX.decode(convertedSeed)));
-                              print(hdWallet.address);
 			      final key = ep.Key.fromUtf8("${md5.convert(utf8.encode(passwordValue.text))}");
 			      final iv = ep.IV.fromLength(16);
                               globals.ivValue = iv;
@@ -63,7 +62,7 @@ class PasswordPage extends StatelessWidget {
 			      //final decrypted = encrypter.decrypt(encrypted, iv: iv);
                               await prefs.setString('iv-value', '${iv}');
 			      await prefs.setString('seed', encrypted.base64);
-			      await prefs.setString('address', encrypted.base64);
+			      await prefs.setString('address', address ?? "");
 			      Navigator.of(context, rootNavigator: true)
 				  .pop();
 			    }
