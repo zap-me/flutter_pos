@@ -492,15 +492,15 @@ class _MyHomePageState extends State<MyHomePage> {
                       gapless: false,
                     ),
                   ),
-		  floatingActionButton: FloatingActionButton(
-		    onPressed: () {
-		      setState(() {
-			isPremio = true;
-		      });
-		    },
-		    child: const FaIcon(FontAwesomeIcons.ring),
-		    backgroundColor: Colors.blue,
-		  ),
+            floatingActionButton: FloatingActionButton(
+              onPressed: () {
+                setState(() {
+                  isPremio = true;
+                });
+              },
+              child: const FaIcon(FontAwesomeIcons.ring),
+              backgroundColor: Colors.blue,
+            ),
           );
   }
 }
