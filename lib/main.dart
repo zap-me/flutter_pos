@@ -160,7 +160,7 @@ class _MyHomePageState extends State<MyHomePage> {
     return isPremio == true
         ? Scaffold(
             appBar: AppBar(
-              title: Text(widget.title),
+              title: FaIcon(FontAwesomeIcons.ring),
             ),
             body: Center(
               child: Column(
@@ -457,7 +457,8 @@ class _MyHomePageState extends State<MyHomePage> {
           )
         : Scaffold(
             appBar: AppBar(
-              title: Text(widget.title),
+              title: FaIcon(FontAwesomeIcons.bitcoin),
+              backgroundColor: Colors.amber,
             ),
             body: alreadyHasPK == false
                 ? Center(
@@ -491,6 +492,15 @@ class _MyHomePageState extends State<MyHomePage> {
                       gapless: false,
                     ),
                   ),
+		  floatingActionButton: FloatingActionButton(
+		    onPressed: () {
+		      setState(() {
+			isPremio = true;
+		      });
+		    },
+		    child: const FaIcon(FontAwesomeIcons.ring),
+		    backgroundColor: Colors.blue,
+		  ),
           );
   }
 }
