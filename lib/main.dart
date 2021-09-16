@@ -11,6 +11,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:bip39/bip39.dart' as bip39;
 import 'globals.dart' as globals;
+import 'passwordpage.dart';
 
 const URL_BASE = "https://mtoken-test.zap.me/";
 const WS_URL = "https://mtoken-test.zap.me/paydb";
@@ -88,6 +89,7 @@ Future<bool> checkIfPKSet() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
   if (prefs.containsKey('seed')) {
     returnResult = true;
+    globals.privKey = prefs.getString('seed') ?? "";
   }
   return returnResult;
 }
@@ -463,8 +465,11 @@ class _MyHomePageState extends State<MyHomePage> {
                 SizedBox(height: 100),
 		DialogButton(
 		    onPressed: () async {
-		      SharedPreferences prefs = await SharedPreferences.getInstance();
-		      await prefs.setString('seed', freshMnemonic);
+                      globals.privKey = bip39.mnemonicToSeedHex(freshMnemonic);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => PasswordPage()),
+                      );
                       setState(
                         (){
                           alreadyHasPK = true;
@@ -477,7 +482,7 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
           ) : 
           Center(
-          child: Text("already has PK")
+          child: Text("priv key is ${globals.privKey}"),
           ),
         );
   }
