@@ -1,24 +1,18 @@
 import 'package:encrypt/encrypt.dart'as ep;
 import 'globals.dart' as globals;
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:rflutter_alert/rflutter_alert.dart';
 import 'package:crypto/crypto.dart';
 import 'dart:convert';
-import 'package:qr_flutter/qr_flutter.dart';
 import 'dart:typed_data';
-import 'package:qr_code_scanner/qr_code_scanner.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:socket_io_client/socket_io_client.dart' as IO;
-import 'package:bip39/bip39.dart' as bip39;
 import 'package:bip32/bip32.dart';
 import 'package:hex/hex.dart';
 import 'package:defichaindart/defichaindart.dart';
 
 class PasswordPage extends StatelessWidget {
   final _formKey = GlobalKey<FormState>();
-  TextEditingController passwordValue = TextEditingController();
+  final TextEditingController passwordValue = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -60,7 +54,7 @@ class PasswordPage extends StatelessWidget {
 			      final encrypted = encrypter.encrypt(convertedSeed, iv: iv);
                               globals.privKey = encrypted.base64;
 			      //final decrypted = encrypter.decrypt(encrypted, iv: iv);
-                              await prefs.setString('iv-value', '${iv}');
+                              await prefs.setString('iv-value', iv.toString());
 			      await prefs.setString('seed', encrypted.base64);
 			      await prefs.setString('address', address ?? "");
 			      Navigator.of(context, rootNavigator: true)

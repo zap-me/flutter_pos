@@ -149,21 +149,12 @@ class _MyHomePageState extends State<MyHomePage> {
   String freshMnemonic = bip39.generateMnemonic();
 
   void initState() {
+    super.initState();
     isPremio = true;
   }
 
   @override
   Widget build(BuildContext context) {
-  if(alreadyHasPK == false) {
-    () async {
-      bool isPKSet = await checkIfPKSet();
-      setState(
-        () {
-          alreadyHasPK = isPKSet;
-        }
-      );
-    };
-  }
     setUpWS(context);
     Uint8List bytes = Base64Codec().decode(base64EncodedPic);
     return isPremio == true ?
@@ -486,7 +477,7 @@ class _MyHomePageState extends State<MyHomePage> {
 	    QrImage(
 	      data: globals.segwitAddress,
 	      version: QrVersions.auto,
-	      size: 180,
+	      size: 300,
 	      gapless: false,
 	    ),
           ),
